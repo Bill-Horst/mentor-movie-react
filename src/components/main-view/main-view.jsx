@@ -14,7 +14,7 @@ export class MainView extends React.Component {
         super();
         this.state = {
             movies: null,
-            selectedMovie: null,
+            selectedMovieId: null,
             user: null
         };
     }
@@ -27,7 +27,19 @@ export class MainView extends React.Component {
             });
             this.getMovies(accessToken);
         }
+
+        window.addEventListener('hashchange', this.handleNewHash, false);
+
+        this.handleNewHash();
     }
+
+    handleNewHash = () => {
+        const movieId = window.location.hash.replace(/^#\/?|\/$/g, '').split('/');
+      
+        this.setState({
+          selectedMovieId: movieId[0]
+        });
+      }
 
     getMovies(token) {
         axios.get('https://mentor-movie-api.herokuapp.com/movies', {
@@ -44,9 +56,10 @@ export class MainView extends React.Component {
     }
 
     onMovieClick(movie) {
-        this.setState({
-            selectedMovie: movie
-        });
+        // this.setState({
+        //     selectedMovieId: movie._id
+        // });
+        window.location.hash = '#' + movie._id;
     }
 
     onLoggedIn(authData) {
@@ -73,13 +86,15 @@ export class MainView extends React.Component {
     }
 
     render() {
-        const { movies, selectedMovie, user, registered } = this.state;
+        const { movies, selectedMovieId, user, registered } = this.state;
 
         // if (!user && !registered) return <RegistrationView onRegistered={registered => this.onRegistered(registered)} />;
 
         if (!user) return <LoginView onLoggedIn={authData => this.onLoggedIn(authData)} />;
 
         if (!movies) return <div className="main-view" />;
+
+        const selectedMovie = selectedMovieId ? movies.find(movie => movie._id === selectedMovieId) : null;
 
         return (
             <div className="main-view">
