@@ -83,6 +83,8 @@ export class MainView extends React.Component {
 
         if (!movies) return <div className="main-view" />;
 
+        console.log(movies.filter(m => m.Director.Name === 'Jonathan Piggy'))
+
         return (
             <Router>
                 <div className="main-view">
@@ -93,12 +95,12 @@ export class MainView extends React.Component {
 
                             <Route exact path="/genres/:name" render={({ match }) => {
                                 if (!movies) return <div className="main-view" />;
-                                return <GenreView genre={movies.find(m => m.Genre.Name === match.params.name).Genre} />
+                                return <GenreView genre={movies.find(m => m.Genre.Name === match.params.name).Genre} genreMovies={movies.filter(m => m.Genre.Name === match.params.name)}/>
                             }} />
 
                             <Route exact path="/directors/:name" render={({ match }) => {
                                 if (!movies) return <div className="main-view" />;
-                                return <DirectorView director={movies.find(m => m.Director.Name === match.params.name).Director} />
+                                return <DirectorView director={movies.find(m => m.Director.Name === match.params.name).Director} directorMovies={movies.filter(m => m.Director.Name === match.params.name)} />
                             }} />
                             
                         </Row>
