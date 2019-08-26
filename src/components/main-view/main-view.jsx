@@ -1,7 +1,7 @@
 import React from 'react';
 import axios from 'axios';
 import './main-view.scss';
-import { BrowserRouter as Router, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Link } from 'react-router-dom';
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import { LoginView } from '../login-view/login-view';
@@ -11,6 +11,8 @@ import { DirectorView } from '../director-view/director-view';
 import { GenreView } from '../genre-view/genre-view';
 import { RegistrationView } from '../registration-view/registration-view';
 import { generateKeyPairSync } from 'crypto';
+import Button from 'react-bootstrap/Button';
+import { EditUserView } from '../edit-user-view/edit-user-view';
 
 export class MainView extends React.Component {
 
@@ -46,13 +48,6 @@ export class MainView extends React.Component {
             });
     }
 
-    // onMovieClick(movie) {
-    //     // this.setState({
-    //     //     selectedMovieId: movie._id
-    //     // });
-    //     window.location.hash = '#' + movie._id;
-    // }
-
     onLoggedIn(authData) {
         console.log(authData)
         this.setState({
@@ -64,15 +59,22 @@ export class MainView extends React.Component {
         this.getMovies(authData.token);
     }
 
-    // onRegistered(registered) {
-    //     this.setState({
-    //         registered
-    //     })
-    // }
-
     returnToMainView() {
         this.setState({
             selectedMovie: null
+        });
+    }
+
+    removeFavorite(id) {
+        console.log('deleting movie with id: ', id)
+        axios.delete(`https://mentor-movie-api.herokuapp.com/users/${localStorage.getItem('user')}/movies/${id}`, {
+            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        })
+        .then(response => {
+            console.log(`deleted movie from db with id ${id}`)
+        })
+        .catch(e => {
+            console.log(e);
         });
     }
 
@@ -81,13 +83,15 @@ export class MainView extends React.Component {
 
         if (!user) return <LoginView onLoggedIn={authData => this.onLoggedIn(authData)} />;
 
-        if (!movies) return <div className="main-view" />;
-
-        console.log(movies.filter(m => m.Director.Name === 'Jonathan Piggy'))
+        if (!movies) return <LoginView onLoggedIn={authData => this.onLoggedIn(authData)} />;
 
         return (
             <Router>
                 <div className="main-view">
+                    <h1>Signed in as {user}</h1>
+                    <Link to={`/logout`}><Button>Log out</Button></Link>
+                    <Link to={`/users/edit`}><Button>Edit your user info</Button></Link>
+                    <Link to={`/`}>Movies</Link>
                     <Container>
                         <Row>
                             <Route exact path="/" render={() => movies.map(m => <MovieCard key={m._id} movie={m} />)} />
@@ -95,14 +99,23 @@ export class MainView extends React.Component {
 
                             <Route exact path="/genres/:name" render={({ match }) => {
                                 if (!movies) return <div className="main-view" />;
-                                return <GenreView genre={movies.find(m => m.Genre.Name === match.params.name).Genre} genreMovies={movies.filter(m => m.Genre.Name === match.params.name)}/>
+                                return <GenreView genre={movies.find(m => m.Genre.Name === match.params.name).Genre} genreMovies={movies.filter(m => m.Genre.Name === match.params.name)} />
                             }} />
 
                             <Route exact path="/directors/:name" render={({ match }) => {
                                 if (!movies) return <div className="main-view" />;
                                 return <DirectorView director={movies.find(m => m.Director.Name === match.params.name).Director} directorMovies={movies.filter(m => m.Director.Name === match.params.name)} />
                             }} />
-                            
+
+                            <Route exact path="/users/edit" render={ () => {
+                                return <EditUserView user={user} movies={movies} removeFav={fav => this.removeFavorite(fav)}/>
+                            }} />
+
+                            <Route exact path="/logout" render={() => {
+                                localStorage.setItem('user', null);
+                                localStorage.setItem('token', null);
+                            }} />
+
                         </Row>
                     </Container>
                 </div>
